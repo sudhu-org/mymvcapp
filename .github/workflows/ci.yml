@@ -35,10 +35,21 @@ jobs:
       #   # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
       #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - name: Build Docker image
-        run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
-          docker build -t $IMAGE .
-          docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+      # - name: Build Docker image
+      #   run: |
+      #     IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+      #     docker build -t $IMAGE .
+      #     docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
 
+      # - name: Push image
+      #   run: |
+      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+
+      # - name: Upload image details
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: image-info
+      #     path: |
+      #       image_name.txt
         # (optional) create an artifact or use outputs for downstream jobs
