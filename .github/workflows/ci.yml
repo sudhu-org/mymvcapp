@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write          # only if using OIDC for login
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore ./MyApp/MyApp.csproj
+
+      - name: Build
+        run: dotnet build --no-restore -c Release ./MyApp/MyApp.csproj
+
+      - name: Test
+        run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
+
+      - name: Login to GHCR
+        # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+          docker build -t $IMAGE .
+          docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+
+      - name: Push image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+
+      - name: Upload image details
+        uses: actions/upload-artifact@v4
+        with:
+          name: image-info
+          path: |
+            image_name.txt
+        # (optional) create an artifact or use outputs for downstream jobs
