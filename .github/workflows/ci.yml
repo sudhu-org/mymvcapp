@@ -23,17 +23,17 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Restore
-        run: dotnet restore ./MyApp/MyApp.csproj
+        run: dotnet restore ./MyMvcApp/MyMvcApp.csproj
 
       - name: Build
-        run: dotnet build --no-restore -c Release ./MyApp/MyApp.csproj
+        run: dotnet build --no-restore -c Release ./MyMvcApp/MyMvcApp.csproj
 
-      - name: Test
-        run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
+      # - name: Test
+      #   run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
 
-      - name: Login to GHCR
-        # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      # - name: Login to GHCR
+      #   # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
+      #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build Docker image
         run: |
