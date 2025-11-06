@@ -23,10 +23,10 @@ jobs:
           dotnet-version: '9.0.x'
 
       - name: Restore
-        run: dotnet restore ./MyMvcApp/MyMvcApp.csproj
+        run: dotnet restore ./MyMvcApp.csproj
 
       - name: Build
-        run: dotnet build --no-restore -c Release ./MyMvcApp/MyMvcApp.csproj
+        run: dotnet build --no-restore -c Release ./MyMvcApp.csproj
 
       # - name: Test
       #   run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
