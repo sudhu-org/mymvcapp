@@ -38,7 +38,7 @@ jobs:
         run: docker build -t mymvcapp:latest .
 
       - name: Push Docker image
-        run: docker push ${{ github.repository_owner }}/myimage:latest .
+        run: docker push mymvcapp:latest
 
       # - name: Build Docker image 
       #   run: |
