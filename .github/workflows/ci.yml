@@ -41,6 +41,9 @@ jobs:
       - name: Build Docker image
         run: |
             IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+            echo IMAGE
+            echo $IMAGE
+            echo "sudhu"
             docker build -t $IMAGE -f mymvcapp/Dockerfile mymvcapp
 
       - name: Push Docker image
