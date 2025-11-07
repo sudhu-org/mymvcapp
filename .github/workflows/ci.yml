@@ -1,5 +1,9 @@
 name: CI
-
+permissions:
+  contents: read
+  packages: write     # <--- allow pushing to GHCR
+  id-token: write     # optional, for OIDC if using it
+  
 on:
   push:
     branches: [ main ]
@@ -31,32 +35,25 @@ jobs:
       # - name: Test
       #   run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
 
-      # - name: Login to GHCR
-      #   # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
-      #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      # - name: Build Docker image
-      #   run: docker build -t mymvcapp:latest .
+      - name: Login to GHCR
+        run: echo "${{ app.TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Build Docker image
-        run: |
-            IMAGE=ghcr.io/${{ github.repository }}:latest .
-            echo $IMAGE
-            docker build -t $IMAGE mymvcapp
+        run: docker build -t mymvcapp:latest .
 
-      - name: Push Docker image
-        run: docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
-
+      # - name: Push Docker image
+      #   run: docker push mymvcapp:latest
+    
       # - name: Build Docker image
       #   run: |
       #     IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
       #     docker build -t $IMAGE .
       #     docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
 
-      # - name: Push image
-      #   run: |
-      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
-      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+      - name: Push image
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
       
 
 
