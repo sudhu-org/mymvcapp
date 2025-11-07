@@ -35,8 +35,16 @@ jobs:
       #   # Option A: use GITHUB_TOKEN (recommended for same-repo GHCR)
       #   run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
+      # - name: Build Docker image
+      #   run: docker build -t mymvcapp:latest .
+
       - name: Build Docker image
-        run: docker build -t mymvcapp:latest .
+        run: |
+            IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+            docker build -t $IMAGE -f mymvcapp/Dockerfile MyApp
+
+      - name: Push Docker image
+        run: docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
 
       # - name: Build Docker image
       #   run: |
@@ -48,10 +56,8 @@ jobs:
       #   run: |
       #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
       #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+      
 
-      - name: Push image
-        run: |
-          docker push mymvcapp:latest
 
 
       # - name: Upload image details
