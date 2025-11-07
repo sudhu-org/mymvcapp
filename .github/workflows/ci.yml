@@ -1,5 +1,9 @@
 name: CI
-
+permissions:
+  contents: read
+  packages: write     # <--- allow pushing to GHCR
+  id-token: write     # optional, for OIDC if using it
+  
 on:
   push:
     branches: [ main ]
