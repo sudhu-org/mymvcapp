@@ -51,7 +51,7 @@ jobs:
 
       - name: Push image
         run: |
-          docker push ghcr.io/mymvcapp:latest
+          docker push mymvcapp:latest
 
 
       # - name: Upload image details
