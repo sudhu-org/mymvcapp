@@ -40,7 +40,7 @@ jobs:
 
       - name: Build Docker image
         run: |
-            IMAGE=ghcr.io/${{ github.repository }}:latest .
+            IMAGE=ghcr.io/${{ github.repository }}:latest 
             echo $IMAGE
             docker build -t $IMAGE mymvcapp
 
