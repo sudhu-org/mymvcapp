@@ -58,7 +58,7 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            set -e
+            set -e 
             # variables exported from job
             IMAGE="${{ env.IMAGE_LATEST }}"
             # configure whether to use sudo for docker commands
