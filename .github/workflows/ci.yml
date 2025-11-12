@@ -1,74 +1,89 @@
-name: CI
-  
+name: CI-CD Build & Deploy to Ubuntu
+
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main]
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write    # allow GITHUB_TOKEN to push to GHCR for this repo
+
+env:
+  IMAGE_NAME: mymvcapp
 
 jobs:
-  build-and-push:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Set up .NET
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore
-        run: dotnet restore ./MyMvcApp.csproj
+      - name: Restore & Build
+        run: |
+          dotnet restore ./MyMvcApp.csproj
+          dotnet build --configuration Release ./MyMvcApp.csproj
+          dotnet publish -c Release -o publish ./MyMvcApp.csproj
 
-      - name: Build
-        run: dotnet build --no-restore -c Release ./MyMvcApp.csproj
-
-      # - name: Test
-      #   run: dotnet test --no-build -c Release ./MyApp.Tests/MyApp.Tests.csproj
-
-      - name: Login to GHCR
+      - name: Login to GHCR (push)
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # - name: Build Docker image
-      #   run: docker build -t mymvcapp:latest .
-
-      - name: Build Docker image (tag for GHCR)
+      - name: Build Docker image (tagged for GHCR)
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
+          OWNER=${{ github.repository_owner }}
+          REPO_NAME=${{ github.event.repository.name }}
+          IMAGE=ghcr.io/$OWNER/$REPO_NAME:${{ github.sha }}
           docker build -t $IMAGE -f ./Dockerfile .
+          docker tag $IMAGE ghcr.io/$OWNER/$REPO_NAME:latest
+          echo "IMAGE=$IMAGE" >> $GITHUB_ENV
+          echo "IMAGE_LATEST=ghcr.io/$OWNER/$REPO_NAME:latest" >> $GITHUB_ENV
 
-      - name: Push Docker image to GHCR
+      - name: Push image to GHCR
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
           docker push $IMAGE
-          # also push a 'latest' tag (optional)
-          docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
-          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
-      
+          docker push $IMAGE_LATEST
 
-      # - name: Build Docker image 
-      #   run: |
-      #     IMAGE=ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
-      #     docker build -t $IMAGE .
-      #     docker tag $IMAGE ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
+      # ---------- Deploy: SSH into server and pull + restart ----------
+      - name: Deploy to Ubuntu server via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            # variables exported from job
+            IMAGE="${{ env.IMAGE_LATEST }}"
+            # configure whether to use sudo for docker commands
+            DOCKER_CMD=docker
+            if [ "${{ secrets.DOCKER_SUDO }}" = "true" ]; then
+              DOCKER_CMD="sudo docker"
+            fi
 
-      # - name: Push image
-      #   run: |
-      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:sha-${{ github.sha }}
-      #     docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:latest
-      
+            echo "Logging into GHCR on remote host (so it can pull private images)"
+            echo "${{ secrets.GHCR_PAT }}" | $DOCKER_CMD login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
 
+            echo "Pulling image: $IMAGE"
+            $DOCKER_CMD pull $IMAGE
 
+            # If running with docker run (no compose) - stop & replace container
+            CONTAINER_NAME="mymvcapp"
 
-      # - name: Upload image details
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: image-info
-      #     path: |
-      #       image_name.txt
-        # (optional) create an artifact or use outputs for downstream jobs
+            if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+              echo "Stopping existing container..."
+              $DOCKER_CMD stop $CONTAINER_NAME || true
+              echo "Removing existing container..."
+              $DOCKER_CMD rm $CONTAINER_NAME || true
+            fi
+
+            echo "Starting new container from image $IMAGE"
+            $DOCKER_CMD run -d --name $CONTAINER_NAME --restart unless-stopped -p 80:5000 $IMAGE
+
+            echo "Deployment finished"
