@@ -68,7 +68,9 @@ jobs:
             fi
 
             echo "Logging into GHCR on remote host (so it can pull private images)"
-            echo "${{ secrets.GHCR_PAT }}" | $DOCKER_CMD login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            # echo "${{ secrets.GHCR_PAT }}" | $DOCKER_CMD login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
 
             echo "Pulling image: $IMAGE"
             $DOCKER_CMD pull $IMAGE
