@@ -46,7 +46,7 @@ jobs:
 
       - name: Push image to GHCR
         run: |
-          docker push $IMAGE
+          docker push $IMAGE 
           docker push $IMAGE_LATEST
 
       # ---------- Deploy: SSH into server and pull + restart ----------
