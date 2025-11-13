@@ -78,14 +78,15 @@ jobs:
             # If running with docker run (no compose) - stop & replace container
             CONTAINER_NAME="mymvcapp"
 
-            #if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+            if $DOCKER_CMD ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
               echo "Stopping existing container..."
               $DOCKER_CMD stop $CONTAINER_NAME || true
               echo "Removing existing container..."
               $DOCKER_CMD rm $CONTAINER_NAME || true
-            #fi
+            fi
 
             echo "Starting new container from image $IMAGE"
-            $DOCKER_CMD run -d --name $CONTAINER_NAME --restart unless-stopped -p 80:5000 $IMAGE
+            $DOCKER_CMD run -d --name $CONTAINER_NAME -p 80:5000 $IMAGE
 
+            #docker run -d --name mymvcapp -p 80:8080 ghcr.io/sudhu-org/mymvcapp:latest
             echo "Deployment finished"
