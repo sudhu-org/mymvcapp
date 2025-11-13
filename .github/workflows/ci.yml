@@ -86,7 +86,7 @@ jobs:
             fi
 
             echo "Starting new container from image $IMAGE"
-            $DOCKER_CMD run -d --name $CONTAINER_NAME -p 80:5000 $IMAGE
+            $DOCKER_CMD run -d --name $CONTAINER_NAME -p 80:8080 $IMAGE
 
             #docker run -d --name mymvcapp -p 80:8080 ghcr.io/sudhu-org/mymvcapp:latest
             echo "Deployment finished"
